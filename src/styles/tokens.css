@@ -1,0 +1,53 @@
+@import url('https://fonts.googleapis.com/css2?family=Sora:wght@300;400;500;600;700;800&family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;0,9..40,600;1,9..40,400&display=swap');
+
+:root {
+  /* Surfaces */
+  --bg: #F7F8FA;
+  --surface: #FFFFFF;
+  --surface-2: #F0F2F5;
+  --border: #E4E8EF;
+  --border-focus: #3B6EE8;
+
+  /* Text */
+  --text-primary: #0D1117;
+  --text-secondary: #5A6580;
+  --text-muted: #9BA8BE;
+
+  /* Brand */
+  --accent: #2F5BE8;
+  --accent-light: #EEF2FD;
+  --accent-dark: #1E42C4;
+
+  /* Semantic colours */
+  --green: #16A34A;
+  --green-light: #DCFCE7;
+  --amber: #D97706;
+  --amber-light: #FEF3C7;
+  --red: #DC2626;
+  --red-light: #FEE2E2;
+  --purple: #7C3AED;
+  --purple-light: #EDE9FE;
+  --teal: #0D9488;
+  --teal-light: #CCFBF1;
+
+  /* Gradients */
+  --gradient: linear-gradient(135deg, #2F5BE8 0%, #1E42C4 50%, #0D2A8A 100%);
+  --gradient-soft: linear-gradient(135deg, #EEF2FD 0%, #E8ECFB 100%);
+
+  /* Shadows */
+  --shadow-xs: 0 1px 2px rgba(0, 0, 0, 0.05);
+  --shadow-sm: 0 1px 4px rgba(0, 0, 0, 0.06), 0 2px 8px rgba(0, 0, 0, 0.04);
+  --shadow-md: 0 4px 16px rgba(0, 0, 0, 0.08), 0 1px 4px rgba(0, 0, 0, 0.04);
+  --shadow-lg: 0 8px 32px rgba(0, 0, 0, 0.10), 0 2px 8px rgba(0, 0, 0, 0.06);
+  --shadow-accent: 0 4px 20px rgba(47, 91, 232, 0.25);
+
+  /* Radii */
+  --radius-sm: 8px;
+  --radius: 12px;
+  --radius-lg: 16px;
+  --radius-xl: 24px;
+
+  /* Typography */
+  --font-display: 'Sora', sans-serif;
+  --font-body: 'DM Sans', sans-serif;
+}
