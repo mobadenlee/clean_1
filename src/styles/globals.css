@@ -428,3 +428,44 @@ input, textarea, select { font-family: var(--font-body); }
   .grid-3 { grid-template-columns: 1fr; }
   .grid-4 { grid-template-columns: 1fr 1fr; }
 }
+
+/* ─── SMALL PHONES (≤480px) ──────────────────────────────────────────────────
+   Most NYSC users are on phones in the 360–414px range. The 900/600px
+   breakpoints above are really tablet-sized; this block tunes the things that
+   stay cramped or oversized on an actual phone. */
+@media (max-width: 480px) {
+  /* Single-column everything — two columns squash cards on a narrow screen */
+  .grid-3, .grid-4         { grid-template-columns: 1fr; }
+
+  /* The search bar is a fixed 300px on desktop; let it go fluid so it doesn't
+     crowd the post/notification buttons in the mobile header */
+  .search-bar              { width: 100%; max-width: 100%; }
+
+  /* Tighter page padding reclaims horizontal space */
+  .page-content            { padding: 14px; }
+
+  /* Scale down the big stat numbers so they don't dominate small cards */
+  .stat-value              { font-size: 24px; }
+
+  /* Hero/landing typography: smaller subtitle + full-width stacked CTAs */
+  .hero-content            { padding: 36px 20px; }
+  .hero-subtitle           { font-size: 15.5px; margin-bottom: 28px; }
+  .hero-cta                { flex-direction: column; align-items: stretch; }
+  .hero-cta .btn           { width: 100%; }
+  .landing-nav             { padding: 14px 16px; }
+  .features-section        { padding: 36px 16px; }
+
+  /* Ensure tap targets are comfortable (≥44px) on touch screens */
+  .nav-item                { min-height: 44px; }
+  .btn                     { min-height: 44px; }
+  .btn-sm                  { min-height: 38px; }
+  .btn-icon                { width: 44px; height: 44px; }
+}
+
+/* ─── VERY SMALL PHONES (≤380px) ─────────────────────────────────────────────
+   Budget Android devices (e.g. 360px wide). Final squeeze on type/padding. */
+@media (max-width: 380px) {
+  .page-content            { padding: 12px; }
+  .stat-value              { font-size: 21px; }
+  .hero-subtitle           { font-size: 14.5px; }
+}
