@@ -1,4 +1,4 @@
-import { createContext, useContext, useEffect, useState, useCallback } from 'react'
+import { createContext, useContext, useEffect, useState, useCallback, useRef } from 'react'
 import { supabase } from '../lib/supabase'
 
 const AuthContext = createContext(null)
@@ -63,46 +63,92 @@ async function ensureProfile(user) {
 export function AuthProvider({ children }) {
   const [session,     setSession]     = useState(undefined) // undefined = still loading
   const [currentUser, setCurrentUser] = useState(null)
+  const [profileLoading, setProfileLoading] = useState(false)
+  const loadedUserId = useRef(null)
 
   const loadProfile = useCallback(async (user) => {
+    setProfileLoading(true)
     try {
       const profile = await ensureProfile(user)
+      console.debug('[auth] profile loaded:', profile?.username ?? profile?.id)
       setCurrentUser(profile)
     } catch (err) {
-      console.error('loadProfile failed:', err.message)
-      // Set a minimal user object from auth metadata so UI never hangs
-      const meta = user.user_metadata ?? {}
-      setCurrentUser({
-        id:          user.id,
-        full_name:   meta.full_name ?? meta.name ?? user.email?.split('@')[0] ?? 'User',
-        username:    user.email?.split('@')[0] ?? 'user',
-        avatar_url:  meta.avatar_url ?? meta.picture ?? null,
-        role:        'member',
-        trust_score: 0,
-        state:       null,
-        batch:       null,
-      })
+      // A common transient cause is the auth token being mid-refresh when the
+      // request fires (e.g. when returning to an idle tab). Wait briefly for
+      // the session to settle and retry once before giving up.
+      console.warn('[auth] loadProfile failed, retrying once:', err.message)
+      try {
+        await new Promise((r) => setTimeout(r, 600))
+        await supabase.auth.getSession() // nudges token refresh if needed
+        const profile = await ensureProfile(user)
+        setCurrentUser(profile)
+        return
+      } catch (retryErr) {
+        console.error('[auth] loadProfile failed after retry:', retryErr.message)
+        // Set a minimal user object from auth metadata so UI never hangs
+        const meta = user.user_metadata ?? {}
+        setCurrentUser({
+          id:          user.id,
+          full_name:   meta.full_name ?? meta.name ?? user.email?.split('@')[0] ?? 'User',
+          username:    user.email?.split('@')[0] ?? 'user',
+          avatar_url:  meta.avatar_url ?? meta.picture ?? null,
+          role:        'member',
+          trust_score: 0,
+          state:       null,
+          batch:       null,
+        })
+      }
+    } finally {
+      setProfileLoading(false)
     }
   }, [])
 
   useEffect(() => {
-    // Resolve initial session on mount
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      setSession(session ?? null)
-      if (session?.user) loadProfile(session.user)
-    })
+    let active = true
 
+    // Single source of truth: onAuthStateChange fires an INITIAL_SESSION event
+    // on mount (supabase-js v2) with the restored session, then SIGNED_IN /
+    // TOKEN_REFRESHED / SIGNED_OUT as they happen.
+    //
+    // CRITICAL: the callback must NOT await any supabase database call directly.
+    // onAuthStateChange holds an internal lock; awaiting a supabase.from(...)
+    // query inside it deadlocks (the query waits for the lock, the lock waits
+    // for the callback to return). This manifests as loadProfile never
+    // resolving — no success and no error logged. So we keep the callback
+    // synchronous and defer the profile load to a microtask via setTimeout(0),
+    // which runs AFTER the callback returns and releases the lock.
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      async (event, session) => {
+      (event, session) => {
+        if (!active) return
+        console.debug('[auth] event:', event, 'user:', session?.user?.email ?? '(none)')
         setSession(session ?? null)
-        if (session?.user) {
-          await loadProfile(session.user)
-        } else {
+
+        if (!session?.user) {
+          loadedUserId.current = null
           setCurrentUser(null)
+          return
         }
+
+        // TOKEN_REFRESHED fires when returning to an idle tab. If the same user
+        // is already loaded, skip the reload to avoid flicker.
+        if (event === 'TOKEN_REFRESHED' && loadedUserId.current === session.user.id) {
+          return
+        }
+
+        loadedUserId.current = session.user.id
+        // Mark profile as loading immediately (synchronously) so the UI shows a
+        // spinner during the gap before the deferred load resolves, instead of
+        // briefly flashing the "Profile unavailable" / fallback state.
+        setProfileLoading(true)
+        // Defer the actual DB call OUT of the auth callback to avoid the lock
+        // deadlock (awaiting a supabase query inside this callback hangs).
+        setTimeout(() => {
+          if (active) loadProfile(session.user)
+        }, 0)
       }
     )
-    return () => subscription.unsubscribe()
+
+    return () => { active = false; subscription.unsubscribe() }
   }, [loadProfile])
 
   const login = useCallback(async (email, password) => {
@@ -157,7 +203,12 @@ export function AuthProvider({ children }) {
     <AuthContext.Provider value={{
       session,
       currentUser,
-      isLoading: session === undefined,
+      // isLoading is true while EITHER the session is still resolving, OR a
+      // session exists but its profile hasn't finished loading yet. This keeps
+      // protected pages on a spinner across the whole gap instead of briefly
+      // flashing the fallback "User" / "Profile unavailable" state on refresh.
+      isLoading: session === undefined || (!!session?.user && !currentUser && profileLoading),
+      profileLoading,
       login,
       signup,
       loginWithGoogle,
