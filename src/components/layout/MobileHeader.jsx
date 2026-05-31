@@ -21,10 +21,21 @@ export default function MobileHeader({ onOpenSidebar }) {
         {title}
       </div>
 
-      <div style={{ marginLeft: 'auto', display: 'flex', gap: 8 }}>
+      <div style={{ marginLeft: 'auto', display: 'flex', gap: 4 }}>
+        {pathname !== '/search' && (
+          <button
+            className="btn btn-ghost btn-icon"
+            onClick={() => navigate('/search')}
+            aria-label="Search issues"
+          >
+            <Icon name="search" size={18} />
+          </button>
+        )}
+
         <button
           className="btn btn-ghost btn-icon"
           onClick={() => navigate('/notifications')}
+          aria-label="Notifications"
           style={{ position: 'relative' }}
         >
           <Icon name="bell" size={18} />
