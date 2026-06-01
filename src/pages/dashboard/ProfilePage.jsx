@@ -7,11 +7,7 @@ import ActivityFeed       from '../../components/dashboard/ActivityFeed'
 import EditProfileModal   from '../../components/profile/EditProfileModal'
 import Button             from '../../components/ui/Button'
 import LoadingSpinner     from '../../components/ui/LoadingSpinner'
-
-function getInitials(name) {
-  if (!name || !name.trim()) return 'NH'
-  return name.trim().split(/\s+/).map(w => w[0]).join('').toUpperCase().slice(0, 2)
-}
+import { getInitials }    from '../../utils/formatters'
 
 export default function ProfilePage() {
   const { currentUser, isLoading: authLoading } = useAuth()
