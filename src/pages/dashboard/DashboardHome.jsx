@@ -9,6 +9,7 @@ import TrustRing          from '../../components/ui/TrustRing'
 import ProgressBar        from '../../components/ui/ProgressBar'
 import LoadingSpinner     from '../../components/ui/LoadingSpinner'
 import { normalizeIssue } from '../../utils/normalize'
+import { AMBASSADOR_TRUST_THRESHOLD } from '../../data/constants'
 
 export default function DashboardHome() {
   const { currentUser }  = useAuth()
@@ -22,7 +23,7 @@ export default function DashboardHome() {
   const recentIssues = rawIssues.slice(0, 3).map(normalizeIssue)
 
   const stats = [
-    { label: 'Trust Score',     value: trust, change: trust >= 80 ? '🛡️ Ambassador' : `${toAmbassador} to Ambassador`, up: true, icon: '⭐' },
+    { label: 'Trust Score',     value: trust, change: trust >= AMBASSADOR_TRUST_THRESHOLD ? '🛡️ Ambassador' : `${toAmbassador} to Ambassador`, up: true, icon: '⭐' },
     { label: 'Helpful Answers', value: trustEvents.filter(e => e.event_type === 'response_upvoted').length, change: 'upvoted responses', up: true, icon: '💬' },
     { label: 'Best Answers',    value: trustEvents.filter(e => e.event_type === 'best_answer_marked').length, change: 'marked on your responses', up: true, icon: '✅' },
     { label: 'Trust Events',    value: trustEvents.length, change: 'total activity', up: true, icon: '📊' },
@@ -39,7 +40,7 @@ export default function DashboardHome() {
         </p>
       </div>
 
-      {trust >= 60 && trust < 80 && (
+      {trust >= 200 && trust < AMBASSADOR_TRUST_THRESHOLD && (
         <div style={{ background: 'var(--gradient)', borderRadius: 'var(--radius-lg)', padding: '20px 24px', marginBottom: 24, display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 12 }}>
           <div style={{ color: 'white' }}>
             <div style={{ fontFamily: 'var(--font-display)', fontWeight: 700, fontSize: 16, marginBottom: 4 }}>
@@ -55,7 +56,7 @@ export default function DashboardHome() {
         </div>
       )}
 
-      {trust >= 80 && (
+      {trust >= AMBASSADOR_TRUST_THRESHOLD && (
         <div style={{ background: 'var(--gradient)', borderRadius: 'var(--radius-lg)', padding: '20px 24px', marginBottom: 24, display: 'flex', alignItems: 'center', gap: 16 }}>
           <div style={{ fontSize: 36 }}>🛡️</div>
           <div style={{ color: 'white' }}>
@@ -71,7 +72,7 @@ export default function DashboardHome() {
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 16 }}>
           <div>
             <h3 style={{ fontWeight: 700, fontSize: 15 }}>Trust Score Progress</h3>
-            <p style={{ fontSize: 13, color: 'var(--text-secondary)', marginTop: 2 }}>Ambassador threshold: 80</p>
+            <p style={{ fontSize: 13, color: 'var(--text-secondary)', marginTop: 2 }}>Ambassador threshold: {AMBASSADOR_TRUST_THRESHOLD}</p>
           </div>
           <TrustRing score={trust} />
         </div>
@@ -79,7 +80,7 @@ export default function DashboardHome() {
         <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: 8 }}>
           <span style={{ fontSize: 12, color: 'var(--text-muted)' }}>0</span>
           <span style={{ fontSize: 12, color: 'var(--accent)', fontWeight: 600 }}>Current: {trust}</span>
-          <span style={{ fontSize: 12, color: 'var(--text-muted)' }}>Ambassador: 80</span>
+          <span style={{ fontSize: 12, color: 'var(--text-muted)' }}>Ambassador: {AMBASSADOR_TRUST_THRESHOLD}</span>
         </div>
 
         {trustEvents.length > 0 && (
