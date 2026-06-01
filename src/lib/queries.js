@@ -101,16 +101,8 @@ export function incrementViewCount(issueId) {
 }
 
 // ── CATEGORIES ────────────────────────────────────────────────────────────────
-
-export async function fetchCategories() {
-  const { data, error } = await supabase
-    .from('issue_categories')
-    .select('id, slug, name')
-    .eq('is_active', true)
-    .order('sort_order')
-  if (error) throw error
-  return data ?? []
-}
+// (Categories are fetched directly in useCategories.js, which keeps the read
+// scoped to the current auth session. No shared helper here.)
 
 // ── RESPONSES ─────────────────────────────────────────────────────────────────
 
@@ -147,23 +139,6 @@ export async function createResponse({ issueId, body, isAnonymous, authorId }) {
       is_ambassador_response, upvote_count, created_at,
       author:profiles!author_id(${PROFILE_FIELDS})
     `)
-    .single()
-  if (error) throw error
-  return data
-}
-
-export async function markBestAnswerQuery(responseId, issueId) {
-  await supabase
-    .from('responses')
-    .update({ is_best_answer: false })
-    .eq('issue_id', issueId)
-    .eq('is_best_answer', true)
-
-  const { data, error } = await supabase
-    .from('responses')
-    .update({ is_best_answer: true })
-    .eq('id', responseId)
-    .select()
     .single()
   if (error) throw error
   return data
