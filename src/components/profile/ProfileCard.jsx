@@ -48,9 +48,9 @@ export default function ProfileCard({ user }) {
           {/* Quick stats */}
           <div style={{ display: 'flex', gap: 20 }}>
             {[
-              ['Trust Score',    user.trust,       '⭐'],
-              ['Issues Solved',  user.solvedCount, '✅'],
-              ['Helpful Answers', 12,              '💬'],
+              ['Trust Score',    user.trust,            '⭐'],
+              ['Best Answers',   user.bestAnswerCount,  '✅'],
+              ['Helpful Answers', user.helpfulCount ?? 0, '💬'],
             ].map(([label, value, icon]) => (
               <div key={label} style={{ textAlign: 'center' }}>
                 <div
