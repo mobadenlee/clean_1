@@ -1,7 +1,4 @@
-function getInitials(name) {
-  if (!name) return '?'
-  return name.split(' ').map(w => w[0]).join('').toUpperCase().slice(0, 2)
-}
+import { getInitials } from './formatters'
 
 function roleColor(role) {
   const map = { ambassador: '#2F5BE8', moderator: '#7C3AED', admin: '#DC2626', member: '#0D9488' }
