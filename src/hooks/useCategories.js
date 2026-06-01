@@ -1,8 +1,8 @@
 import { useQuery } from '@tanstack/react-query'
 import { supabase } from '../lib/supabase'
 
-// Fetch categories directly — bypasses the fetchCategories helper
-// so we can use the current auth session headers automatically
+// Local fetch — kept inline rather than in lib/queries.js so the read
+// stays scoped to the calling component's auth session.
 async function loadCategories() {
   const { data, error } = await supabase
     .from('issue_categories')
