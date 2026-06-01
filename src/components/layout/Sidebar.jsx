@@ -4,14 +4,10 @@ import { useNotifications } from '../../hooks/useNotifications'
 import { NAV_ITEMS }        from '../../data/constants'
 import Avatar               from '../ui/Avatar'
 import Icon                 from '../ui/Icon'
+import { getInitials }      from '../../utils/formatters'
 
 const SECTIONS       = ['main', 'account', 'ambassador']
 const SECTION_LABELS = { main: 'Platform', account: 'My Account', ambassador: 'Ambassador' }
-
-function getInitials(name) {
-  if (!name || !name.trim()) return 'NH'
-  return name.trim().split(/\s+/).map(w => w[0]).join('').toUpperCase().slice(0, 2)
-}
 
 export default function Sidebar({ isOpen, onClose }) {
   const { currentUser, logout } = useAuth()
