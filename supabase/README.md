@@ -10,9 +10,11 @@ reviewers can verify what runs in production by reading the diff.
 ```
 supabase/
 └── migrations/
-    ├── 0001_init.sql                    full schema + RLS + triggers + RPCs
-    ├── 0002_counters_and_role_lock.sql  counter triggers + role-lock trigger
-    └── 0003_refresh_rls.sql             RLS reconciliation + best-answer guard
+    ├── 0001_init.sql                       full schema + RLS + triggers + RPCs
+    ├── 0002_counters_and_role_lock.sql     counter triggers + role-lock trigger
+    ├── 0003_refresh_rls.sql                RLS reconciliation + best-answer guard
+    └── 0004_grants_and_post_init.sql       role grants + categories seed +
+                                            notification triggers + trust system
 ```
 
 ## Applying migrations
