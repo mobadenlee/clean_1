@@ -5,11 +5,7 @@ import { PAGE_TITLES }      from '../../data/constants'
 import Avatar               from '../ui/Avatar'
 import Icon                 from '../ui/Icon'
 import Button               from '../ui/Button'
-
-function getInitials(name) {
-  if (!name || !name.trim()) return 'NH'
-  return name.trim().split(/\s+/).map(w => w[0]).join('').toUpperCase().slice(0, 2)
-}
+import { getInitials }      from '../../utils/formatters'
 
 export default function Header() {
   const { currentUser } = useAuth()
