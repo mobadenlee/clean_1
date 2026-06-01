@@ -23,13 +23,21 @@ export const formatCount = (n) => {
 /**
  * Return initials from a full name string.
  */
-export const getInitials = (name) =>
-  name
-    .split(' ')
+// Canonical getInitials used everywhere in the app. Returns up to 2 uppercase
+// initials from a name. Handles null, undefined, empty, all-whitespace, and
+// names with multiple spaces between words. Returns '?' for any input that
+// can't yield a real initial — never crashes, never uses the brand mark
+// (which is logo-only, not a person fallback).
+export const getInitials = (name) => {
+  if (!name || !String(name).trim()) return '?'
+  return String(name)
+    .trim()
+    .split(/\s+/)
     .map((w) => w[0])
     .join('')
     .toUpperCase()
-    .slice(0, 2);
+    .slice(0, 2)
+}
 
 /**
  * Capitalise the first letter of a string.
