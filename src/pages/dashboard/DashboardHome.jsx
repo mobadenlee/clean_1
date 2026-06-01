@@ -24,7 +24,7 @@ export default function DashboardHome() {
   const stats = [
     { label: 'Trust Score',     value: trust, change: trust >= 80 ? '🛡️ Ambassador' : `${toAmbassador} to Ambassador`, up: true, icon: '⭐' },
     { label: 'Helpful Answers', value: trustEvents.filter(e => e.event_type === 'response_upvoted').length, change: 'upvoted responses', up: true, icon: '💬' },
-    { label: 'Issues Solved',   value: trustEvents.filter(e => e.event_type === 'issue_marked_solved').length, change: 'via your responses', up: true, icon: '✅' },
+    { label: 'Best Answers',    value: trustEvents.filter(e => e.event_type === 'best_answer_marked').length, change: 'marked on your responses', up: true, icon: '✅' },
     { label: 'Trust Events',    value: trustEvents.length, change: 'total activity', up: true, icon: '📊' },
   ]
 
