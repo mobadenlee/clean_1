@@ -8,6 +8,7 @@ import TrustAnalytics  from '../../components/dashboard/TrustAnalytics'
 import Icon            from '../../components/ui/Icon'
 import Button          from '../../components/ui/Button'
 import EmptyState      from '../../components/ui/EmptyState'
+import { AMBASSADOR_TRUST_THRESHOLD } from '../../data/constants'
 import LoadingSpinner  from '../../components/ui/LoadingSpinner'
 
 const TABS = [['queue','Priority Queue'],['analytics','Trust Analytics'],['solved','Solved Cases']]
@@ -80,7 +81,7 @@ export default function AmbassadorDashboard() {
           Ambassador Panel
         </h2>
         <p style={{ color: 'var(--text-secondary)', fontSize: 15, maxWidth: 480, margin: '0 auto 24px' }}>
-          You need a trust score of 80+ to become an Ambassador.
+          You need a trust score of {AMBASSADOR_TRUST_THRESHOLD}+ to become an Ambassador.
           Your current score: <strong>{currentUser?.trust_score ?? 0}</strong>
         </p>
         <Button onClick={() => window.history.back()}>Go Back</Button>
