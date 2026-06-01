@@ -20,7 +20,7 @@ export default function Modal({ isOpen, onClose, title, children, maxWidth = 560
       style={{
         position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.45)',
         display: 'flex', alignItems: 'center', justifyContent: 'center',
-        z: 300, padding: 20,
+        zIndex: 300, padding: 20,
       }}
       onClick={onClose}
     >
