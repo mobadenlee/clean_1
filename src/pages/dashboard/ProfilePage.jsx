@@ -40,12 +40,13 @@ export default function ProfilePage() {
     color:       '#2F5BE8',
     trust:       currentUser.trust_score ?? 0,
     ambassador:  ['ambassador', 'moderator', 'admin'].includes(currentUser.role),
-    solvedCount: trustEvents.filter(e => e.event_type === 'issue_marked_solved').length,
+    bestAnswerCount: trustEvents.filter(e => e.event_type === 'best_answer_marked').length,
+    helpfulCount:    trustEvents.filter(e => e.event_type === 'response_upvoted').length,
     state:       currentUser.state,
     batch:       currentUser.batch,
   }
 
-  const userForTrust = { trust: currentUser.trust_score ?? 0 }
+  const userForTrust = { trust: currentUser.trust_score ?? 0, trustEvents }
 
   const activities = trustEvents.slice(0, 6).map(ev => ({
     text: ev.reason || ev.event_type.replace(/_/g, ' '),
