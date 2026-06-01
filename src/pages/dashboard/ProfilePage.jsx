@@ -1,8 +1,11 @@
+import { useState }       from 'react'
 import { useAuth }        from '../../context/AuthContext'
 import { useTrustEvents } from '../../hooks/useProfile'
 import ProfileCard        from '../../components/profile/ProfileCard'
 import TrustBreakdown     from '../../components/profile/TrustBreakdown'
 import ActivityFeed       from '../../components/dashboard/ActivityFeed'
+import EditProfileModal   from '../../components/profile/EditProfileModal'
+import Button             from '../../components/ui/Button'
 import LoadingSpinner     from '../../components/ui/LoadingSpinner'
 
 function getInitials(name) {
@@ -12,6 +15,7 @@ function getInitials(name) {
 
 export default function ProfilePage() {
   const { currentUser, isLoading: authLoading } = useAuth()
+  const [editOpen, setEditOpen] = useState(false)
   const {
     data: trustEvents = [],
     isLoading: eventsLoading,
@@ -58,6 +62,12 @@ export default function ProfilePage() {
 
   return (
     <div className="page-content animate-in" style={{ maxWidth: 780 }}>
+      <div style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: 12 }}>
+        <Button variant="secondary" size="sm" onClick={() => setEditOpen(true)}>
+          Edit Profile
+        </Button>
+      </div>
+
       <ProfileCard user={userForCard} />
       <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 20 }}>
         <TrustBreakdown user={userForTrust} />
@@ -75,10 +85,16 @@ export default function ProfilePage() {
               Couldn't load recent activity right now.
             </p>
           ) : (
-            <ActivityFeed activities={activities.length ? activities : undefined} />
+            <ActivityFeed activities={activities} />
           )}
         </div>
       </div>
+
+      <EditProfileModal
+        isOpen={editOpen}
+        onClose={() => setEditOpen(false)}
+        currentUser={currentUser}
+      />
     </div>
   )
 }
