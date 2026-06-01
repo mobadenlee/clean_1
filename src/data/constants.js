@@ -40,7 +40,7 @@ export const CATEGORY_BADGE_MAP = {
   'Accommodation':     'badge-purple',
 };
 
-export const AMBASSADOR_TRUST_THRESHOLD = 80;
+export const AMBASSADOR_TRUST_THRESHOLD = 500;
 
 export const BATCHES = ['2024A', '2024B', '2025A', '2025B'];
 
