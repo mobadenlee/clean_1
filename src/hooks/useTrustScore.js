@@ -1,20 +1,18 @@
 import { useMemo } from 'react'
+import { AMBASSADOR_TRUST_THRESHOLD } from '../data/constants'
+import { getTrustClass } from '../utils/trustCalculator'
 
-const AMBASSADOR_THRESHOLD = 80
-
-function getTrustClass(score) {
-  if (score >= 80) return 'trust-high'
-  if (score >= 50) return 'trust-mid'
-  return 'trust-low'
-}
-
+// Lightweight derived-state hook for trust UI. All thresholds and class
+// mappings come from a single source of truth: AMBASSADOR_TRUST_THRESHOLD
+// (constants.js) for the ambassador bar, and getTrustClass (trustCalculator)
+// for the visual tier. Don't hardcode numbers here.
 export function useTrustScore(user) {
   return useMemo(() => {
     const score = user?.trust_score ?? user?.trust ?? 0
     return {
       trustClass:           getTrustClass(score),
-      toAmbassador:         Math.max(0, AMBASSADOR_THRESHOLD - score),
-      isAmbassadorEligible: score >= AMBASSADOR_THRESHOLD,
+      toAmbassador:         Math.max(0, AMBASSADOR_TRUST_THRESHOLD - score),
+      isAmbassadorEligible: score >= AMBASSADOR_TRUST_THRESHOLD,
     }
   }, [user])
 }
