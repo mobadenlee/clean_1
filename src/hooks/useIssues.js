@@ -40,12 +40,22 @@ export function useInfiniteIssues(filters = {}) {
   })
 }
 
+// Per-session set of issue IDs already counted as views. Kept at module
+// scope (outside React) so it survives component remounts and React Query
+// refetches in the same tab. Without this guard, every refetch (focus
+// revalidation, stale refresh, navigating back to the page) would inflate
+// view_count — a single user reloading three times would show as 3 views.
+const _viewedThisSession = new Set()
+
 export function useIssue(id) {
   return useQuery({
     queryKey: issueKeys.detail(id),
     queryFn:  async () => {
       const issue = await fetchIssueById(id)
-      incrementViewCount(id)
+      if (id && !_viewedThisSession.has(id)) {
+        _viewedThisSession.add(id)
+        incrementViewCount(id)
+      }
       return issue
     },
     enabled:   !!id,
