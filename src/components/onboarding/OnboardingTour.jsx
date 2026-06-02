@@ -115,8 +115,25 @@ export default function OnboardingTour({ isActive, onComplete }) {
       ? rect.top - GAP - TOOLTIP_HEIGHT_EST
       : rect.bottom + GAP
 
-    // Center horizontally on target, then clamp to viewport with 12px padding.
-    left = rect.left + rect.width / 2 - TOOLTIP_WIDTH / 2
+    // Smarter horizontal anchoring:
+    //   - If target is in the right half of the screen, anchor tooltip's
+    //     RIGHT edge to the target's right (tooltip extends leftward).
+    //   - If in the left half, anchor LEFT edges (tooltip extends rightward).
+    //   - Then clamp to viewport as a safety net.
+    // This avoids the centered-tooltip-clipping-the-right-edge problem
+    // that hit the Post Issue button (which sits near the right edge of
+    // the header).
+    const targetCenterX  = rect.left + rect.width / 2
+    const viewportCenter = window.innerWidth / 2
+
+    if (targetCenterX > viewportCenter) {
+      // Right-half: tooltip extends leftward from target.
+      left = rect.right - TOOLTIP_WIDTH
+    } else {
+      // Left-half: tooltip extends rightward from target.
+      left = rect.left
+    }
+    // Safety clamp — never let any edge cross the viewport with 12px padding.
     left = Math.max(12, Math.min(left, window.innerWidth - TOOLTIP_WIDTH - 12))
   }
 
