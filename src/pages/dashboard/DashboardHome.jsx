@@ -10,11 +10,15 @@ import ProgressBar        from '../../components/ui/ProgressBar'
 import LoadingSpinner     from '../../components/ui/LoadingSpinner'
 import { normalizeIssue } from '../../utils/normalize'
 import { AMBASSADOR_TRUST_THRESHOLD } from '../../data/constants'
+import { useOnboarding }  from '../../hooks/useOnboarding'
+import OnboardingModal    from '../../components/onboarding/OnboardingModal'
+import OnboardingTour     from '../../components/onboarding/OnboardingTour'
 
 export default function DashboardHome() {
   const { currentUser }  = useAuth()
   const navigate         = useNavigate()
   const { toAmbassador } = useTrustScore(currentUser)
+  const { step, completeModal, completeTour } = useOnboarding()
 
   const { data: rawIssues = [], isLoading } = useIssues({ sortKey: 'recent' })
   const { data: trustEvents = [] } = useTrustEvents(currentUser?.id)
@@ -114,6 +118,11 @@ export default function DashboardHome() {
           ))}
         </div>
       )}
+
+      {/* First-login onboarding. The hook sequences modal -> tour and
+          tracks completion in localStorage so this only runs once. */}
+      <OnboardingModal isOpen={step === 'modal'} onComplete={completeModal} />
+      <OnboardingTour  isActive={step === 'tour'} onComplete={completeTour} />
     </div>
   )
 }
