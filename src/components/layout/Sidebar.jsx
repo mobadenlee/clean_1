@@ -63,6 +63,11 @@ export default function Sidebar({ isOpen, onClose }) {
                     key={item.id}
                     className={`nav-item ${isActive ? 'active' : ''}`}
                     onClick={() => go(to)}
+                    data-onboard={
+                      item.id === 'feed'   ? 'feed' :
+                      item.id === 'search' ? 'search' :
+                      undefined
+                    }
                   >
                     <span className="nav-icon"><Icon name={item.icon} size={16} /></span>
                     {item.label}
