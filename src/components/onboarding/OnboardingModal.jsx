@@ -1,75 +1,102 @@
-import { useEffect } from 'react';
-import Icon from './Icon';
+import { useState } from 'react'
+import Modal  from '../ui/Modal'
+import Button from '../ui/Button'
 
 /**
- * Simple accessible modal overlay.
+ * 3-screen welcome modal for brand-new users. Mounted once by DashboardHome
+ * when useOnboarding's step === 'modal'. Calls onComplete() when the user
+ * finishes the last step or hits Skip — the parent then advances to the
+ * tooltip tour.
  *
- * Locks body scroll while open so the page doesn't scroll behind the
- * backdrop, and allows the modal wrapper itself to scroll if the content
- * is taller than the viewport (rare but possible on small screens).
+ * Content is deliberately short. Onboarding people hate to read; the goal
+ * is to set a brief value-prop, explain the social contract, and get out
+ * of the way.
  */
-export default function Modal({ isOpen, onClose, title, children, maxWidth = 560 }) {
-  // Close on Escape key + lock body scroll while open
-  useEffect(() => {
-    if (!isOpen) return;
-    const handler = (e) => { if (e.key === 'Escape') onClose(); };
-    document.addEventListener('keydown', handler);
+const STEPS = [
+  {
+    emoji: '👋',
+    title: 'Welcome to NYSC HelpDesk',
+    body: 'A community where corps members help each other through PPA issues, clearance delays, allowance problems, and everything else NYSC throws at you.',
+  },
+  {
+    emoji: '🤝',
+    title: 'How it works',
+    body: 'Post your issue with details. Other corps members and ambassadors will respond. Mark the best answer when your problem is solved — and earn trust as you help others.',
+  },
+  {
+    emoji: '🚀',
+    title: 'Get started',
+    body: "You're all set. Have a quick look around — we'll point out a few things in a moment.",
+  },
+]
 
-    // Lock body scroll. Save the previous overflow value so we restore
-    // it exactly on unmount (handles nested modals correctly if we ever
-    // add them).
-    const prevOverflow = document.body.style.overflow;
-    document.body.style.overflow = 'hidden';
+export default function OnboardingModal({ isOpen, onComplete }) {
+  const [i, setI] = useState(0)
+  const step    = STEPS[i]
+  const isLast  = i === STEPS.length - 1
 
-    return () => {
-      document.removeEventListener('keydown', handler);
-      document.body.style.overflow = prevOverflow;
-    };
-  }, [isOpen, onClose]);
+  // Closing the modal (X button, backdrop click) is treated as Skip —
+  // we still advance to onComplete so the user isn't shown the modal
+  // again on next visit. Skip ≠ ignore.
+  const handleClose = () => onComplete()
 
-  if (!isOpen) return null;
+  const handleNext = () => {
+    if (isLast) onComplete()
+    else setI(i + 1)
+  }
 
   return (
-    <div
-      style={{
-        position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.45)',
-        display: 'flex', alignItems: 'center', justifyContent: 'center',
-        zIndex: 300, padding: 20,
-        // Allow the overlay itself to scroll if content is taller than
-        // viewport — content will scroll INSIDE the modal area rather
-        // than pushing the modal off-screen.
-        overflowY: 'auto',
-      }}
-      onClick={onClose}
-    >
-      <div
-        className="card animate-in"
-        style={{
-          width: '100%',
-          maxWidth,
-          boxShadow: 'var(--shadow-lg)',
-          // Ensure modal stays within viewport vertically with margin.
-          margin: 'auto',
-        }}
-        onClick={(e) => e.stopPropagation()}
-      >
-        {title && (
-          <div
-            style={{
-              display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-              marginBottom: 20, paddingBottom: 16, borderBottom: '1px solid var(--border)',
-            }}
-          >
-            <h2 style={{ fontFamily: 'var(--font-display)', fontWeight: 700, fontSize: 17 }}>
-              {title}
-            </h2>
-            <button className="btn btn-ghost btn-icon" onClick={onClose}>
-              <Icon name="x" size={16} />
-            </button>
-          </div>
-        )}
-        {children}
+    <Modal isOpen={isOpen} onClose={handleClose} title="" maxWidth={460}>
+      <div style={{ textAlign: 'center', padding: '4px 8px' }}>
+        <div style={{ fontSize: 56, marginBottom: 12 }}>{step.emoji}</div>
+        <h2 style={{
+          fontFamily: 'var(--font-display)',
+          fontSize: 22,
+          fontWeight: 800,
+          marginBottom: 10,
+        }}>{step.title}</h2>
+        <p style={{
+          fontSize: 15,
+          color: 'var(--text-secondary)',
+          lineHeight: 1.55,
+          marginBottom: 24,
+          maxWidth: 380,
+          margin: '0 auto 24px',
+        }}>{step.body}</p>
+
+        {/* Step indicator dots */}
+        <div style={{
+          display: 'flex',
+          justifyContent: 'center',
+          gap: 6,
+          marginBottom: 20,
+        }}>
+          {STEPS.map((_, idx) => (
+            <span
+              key={idx}
+              style={{
+                width: 7, height: 7, borderRadius: '50%',
+                background: idx === i ? 'var(--accent)' : 'var(--border, #e5e7eb)',
+              }}
+            />
+          ))}
+        </div>
+
+        <div style={{
+          display: 'flex',
+          justifyContent: 'center',
+          gap: 10,
+        }}>
+          {!isLast && (
+            <Button variant="ghost" onClick={onComplete}>
+              Skip
+            </Button>
+          )}
+          <Button onClick={handleNext}>
+            {isLast ? "Let's go" : 'Next'}
+          </Button>
+        </div>
       </div>
-    </div>
-  );
+    </Modal>
+  )
 }
