@@ -52,7 +52,7 @@ export default function Header() {
           )}
         </button>
 
-        <Button size="sm" onClick={() => navigate('/post-issue')}>
+        <Button size="sm" onClick={() => navigate('/post-issue')} data-onboard="post-issue">
           <Icon name="plus" size={14} /> Post Issue
         </Button>
 
