@@ -115,26 +115,33 @@ export default function OnboardingTour({ isActive, onComplete }) {
       ? rect.top - GAP - TOOLTIP_HEIGHT_EST
       : rect.bottom + GAP
 
-    // Smarter horizontal anchoring:
-    //   - If target is in the right half of the screen, anchor tooltip's
-    //     RIGHT edge to the target's right (tooltip extends leftward).
-    //   - If in the left half, anchor LEFT edges (tooltip extends rightward).
-    //   - Then clamp to viewport as a safety net.
-    // This avoids the centered-tooltip-clipping-the-right-edge problem
-    // that hit the Post Issue button (which sits near the right edge of
-    // the header).
-    const targetCenterX  = rect.left + rect.width / 2
-    const viewportCenter = window.innerWidth / 2
+    // Horizontal positioning, computed three ways and the safest is chosen:
+    //   centered: classic — tooltip's center aligns with target's center
+    //   leftAnchored: tooltip's left edge aligns with target's left
+    //   rightAnchored: tooltip's right edge aligns with target's right
+    // Then we pick whichever variant fits in the viewport with at least
+    // EDGE_PADDING on both sides. If none fits perfectly, we clamp.
+    const EDGE_PADDING = 16
+    const maxLeft = window.innerWidth - TOOLTIP_WIDTH - EDGE_PADDING
 
-    if (targetCenterX > viewportCenter) {
-      // Right-half: tooltip extends leftward from target.
-      left = rect.right - TOOLTIP_WIDTH
+    const centered     = rect.left + rect.width / 2 - TOOLTIP_WIDTH / 2
+    const leftAnchored = rect.left
+    const rightAnchored = rect.right - TOOLTIP_WIDTH
+
+    // Try centered first; if it would clip, prefer anchoring to whichever
+    // edge keeps the tooltip on-screen.
+    if (centered >= EDGE_PADDING && centered <= maxLeft) {
+      left = centered
+    } else if (rightAnchored >= EDGE_PADDING && rightAnchored <= maxLeft) {
+      // Target near right edge → anchor tooltip's right to target's right
+      left = rightAnchored
+    } else if (leftAnchored >= EDGE_PADDING && leftAnchored <= maxLeft) {
+      // Target near left edge → anchor tooltip's left to target's left
+      left = leftAnchored
     } else {
-      // Left-half: tooltip extends rightward from target.
-      left = rect.left
+      // Nothing fits cleanly; clamp to viewport.
+      left = Math.max(EDGE_PADDING, Math.min(centered, maxLeft))
     }
-    // Safety clamp — never let any edge cross the viewport with 12px padding.
-    left = Math.max(12, Math.min(left, window.innerWidth - TOOLTIP_WIDTH - 12))
   }
 
   return (
