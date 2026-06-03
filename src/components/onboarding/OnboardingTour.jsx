@@ -1,4 +1,5 @@
 import { useState, useEffect, useLayoutEffect } from 'react'
+import { createPortal } from 'react-dom'
 
 /**
  * Lightweight tooltip tour. Highlights three UI elements in sequence
@@ -144,7 +145,7 @@ export default function OnboardingTour({ isActive, onComplete }) {
     }
   }
 
-  return (
+  return createPortal(
     <>
       {/* Dim overlay. Clicking it acts as Skip — same as the modal pattern. */}
       <div
@@ -236,6 +237,7 @@ export default function OnboardingTour({ isActive, onComplete }) {
           </div>
         </div>
       </div>
-    </>
+    </>,
+    document.body
   )
 }
