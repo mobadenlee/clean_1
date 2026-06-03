@@ -63,6 +63,7 @@ export default function IssueFeedPage() {
             category={filters.category} setCategory={filters.setCategory}
             urgency={filters.urgency}   setUrgency={filters.setUrgency}
             status={filters.status}     setStatus={filters.setStatus}
+            state={filters.state}       setState={filters.setState}
             sortKey={filters.sortKey}   setSortKey={filters.setSortKey}
           />
 
