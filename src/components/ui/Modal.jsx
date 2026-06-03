@@ -1,12 +1,18 @@
 import { useEffect } from 'react';
+import { createPortal } from 'react-dom';
 import Icon from './Icon';
 
 /**
  * Simple accessible modal overlay.
  *
+ * Renders into a portal at document.body so `position: fixed` is relative
+ * to the viewport — not to any ancestor that has a CSS transform/filter/
+ * perspective set (e.g. our `.page-content.animate-in` uses transform,
+ * which would otherwise capture the fixed positioning and cause the modal
+ * to render off-viewport).
+ *
  * Locks body scroll while open so the page doesn't scroll behind the
- * backdrop, and allows the modal wrapper itself to scroll if the content
- * is taller than the viewport (rare but possible on small screens).
+ * backdrop.
  */
 export default function Modal({ isOpen, onClose, title, children, maxWidth = 560 }) {
   // Close on Escape key + lock body scroll while open
@@ -15,9 +21,6 @@ export default function Modal({ isOpen, onClose, title, children, maxWidth = 560
     const handler = (e) => { if (e.key === 'Escape') onClose(); };
     document.addEventListener('keydown', handler);
 
-    // Lock body scroll. Save the previous overflow value so we restore
-    // it exactly on unmount (handles nested modals correctly if we ever
-    // add them).
     const prevOverflow = document.body.style.overflow;
     document.body.style.overflow = 'hidden';
 
@@ -28,16 +31,14 @@ export default function Modal({ isOpen, onClose, title, children, maxWidth = 560
   }, [isOpen, onClose]);
 
   if (!isOpen) return null;
+  if (typeof document === 'undefined') return null;
 
-  return (
+  const overlay = (
     <div
       style={{
         position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.45)',
         display: 'flex', alignItems: 'center', justifyContent: 'center',
         zIndex: 300, padding: 20,
-        // Allow the overlay itself to scroll if content is taller than
-        // viewport — content will scroll INSIDE the modal area rather
-        // than pushing the modal off-screen.
         overflowY: 'auto',
       }}
       onClick={onClose}
@@ -48,7 +49,6 @@ export default function Modal({ isOpen, onClose, title, children, maxWidth = 560
           width: '100%',
           maxWidth,
           boxShadow: 'var(--shadow-lg)',
-          // Ensure modal stays within viewport vertically with margin.
           margin: 'auto',
         }}
         onClick={(e) => e.stopPropagation()}
@@ -72,4 +72,6 @@ export default function Modal({ isOpen, onClose, title, children, maxWidth = 560
       </div>
     </div>
   );
+
+  return createPortal(overlay, document.body);
 }
