@@ -31,7 +31,9 @@ export default function SignupPage() {
     if (Object.keys(errs).length) { setErrors(errs); return }
     setLoading(true); setApiError('')
     try {
-      const { data } = await signup({
+      // signup() returns Supabase's data shape directly ({ user, session }).
+      // Don't destructure { data } — there is no nested data property.
+      const data = await signup({
         email:    form.email,
         password: form.password,
         fullName: form.name,
@@ -44,6 +46,9 @@ export default function SignupPage() {
       // PublicOnlyRoute would handle this on the next render, but being
       // explicit avoids one frame of stale UI.
       else if (data?.session) navigate('/dashboard', { replace: true })
+      // Defensive: if neither branch matched, surface a clear error rather
+      // than silently leaving the user on the form.
+      else setApiError('Account created, but the next step is unclear. Please try logging in.')
     } catch (err) {
       setApiError(err.message || 'Signup failed. Please try again.')
     } finally { setLoading(false) }
