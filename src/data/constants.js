@@ -42,7 +42,13 @@ export const CATEGORY_BADGE_MAP = {
 
 export const AMBASSADOR_TRUST_THRESHOLD = 500;
 
-export const BATCHES = ['2024A', '2024B', '2025A', '2025B'];
+export const BATCHES = [
+  '2026C', '2026B', '2026A',
+  '2025C', '2025B', '2025A',
+  '2024C', '2024B', '2024A',
+  '2023C', '2023B', '2023A',
+  '2022C', '2022B', '2022A',
+];
 
 export const NAV_ITEMS = [
   { id: 'dashboard',     label: 'Dashboard',        icon: 'home',     section: 'main' },
