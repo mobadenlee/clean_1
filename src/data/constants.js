@@ -43,11 +43,11 @@ export const CATEGORY_BADGE_MAP = {
 export const AMBASSADOR_TRUST_THRESHOLD = 500;
 
 export const BATCHES = [
-  '2026C', '2026B', '2026A',
-  '2025C', '2025B', '2025A',
-  '2024C', '2024B', '2024A',
-  '2023C', '2023B', '2023A',
-  '2022C', '2022B', '2022A',
+  '2026C-II', '2026C-I', '2026B-II', '2026B-I', '2026A-II', '2026A-I',
+  '2025C-II', '2025C-I', '2025B-II', '2025B-I', '2025A-II', '2025A-I',
+  '2024C-II', '2024C-I', '2024B-II', '2024B-I', '2024A-II', '2024A-I',
+  '2023C-II', '2023C-I', '2023B-II', '2023B-I', '2023A-II', '2023A-I',
+  '2022C-II', '2022C-I', '2022B-II', '2022B-I', '2022A-II', '2022A-I',
 ];
 
 export const NAV_ITEMS = [
