@@ -1,7 +1,8 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { useEffect } from 'react'
 import { supabase }  from '../lib/supabase'
-import { fetchResponses, createResponse } from '../lib/queries'
+import { fetchResponses, createResponse, markBestAnswerQuery,
+         updateResponseQuery, deleteResponseQuery } from '../lib/queries'
 import { useApp }  from '../context/AppContext'
 import { useAuth } from '../context/AuthContext'
 
@@ -72,5 +73,47 @@ export function useCreateResponse(issueId) {
       showToast('Response posted!', 'success')
     },
     onError: (err) => showToast(err.message || 'Failed to post response.', 'error'),
+  })
+}
+
+export function useMarkBestAnswer(issueId) {
+  const queryClient   = useQueryClient()
+  const { showToast } = useApp()
+
+  return useMutation({
+    mutationFn: (responseId) => markBestAnswerQuery(responseId, issueId),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: responseKeys.byIssue(issueId) })
+      showToast('Best answer marked!', 'success')
+    },
+    onError: (err) => showToast(err.message, 'error'),
+  })
+}
+
+export function useEditResponse(issueId) {
+  const queryClient   = useQueryClient()
+  const { showToast } = useApp()
+
+  return useMutation({
+    mutationFn: ({ responseId, body }) => updateResponseQuery(responseId, body),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: responseKeys.byIssue(issueId) })
+      showToast('Response updated.', 'success')
+    },
+    onError: (err) => showToast(err.message || 'Failed to update response.', 'error'),
+  })
+}
+
+export function useDeleteResponse(issueId) {
+  const queryClient   = useQueryClient()
+  const { showToast } = useApp()
+
+  return useMutation({
+    mutationFn: (responseId) => deleteResponseQuery(responseId),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: responseKeys.byIssue(issueId) })
+      showToast('Response deleted.', 'success')
+    },
+    onError: (err) => showToast(err.message || 'Failed to delete response.', 'error'),
   })
 }
