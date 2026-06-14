@@ -1,5 +1,7 @@
 import { useQuery, useInfiniteQuery, useMutation, useQueryClient } from '@tanstack/react-query'
-import { fetchIssues, fetchIssueById, createIssue, markIssueSolvedQuery, incrementViewCount } from '../lib/queries'
+import { fetchIssues, fetchIssueById, createIssue, markIssueSolvedQuery, incrementViewCount,
+         updateIssueQuery, deleteIssueQuery } from '../lib/queries'
+import { useNavigate } from 'react-router-dom'
 import { useApp } from '../context/AppContext'
 
 export const issueKeys = {
@@ -40,22 +42,12 @@ export function useInfiniteIssues(filters = {}) {
   })
 }
 
-// Per-session set of issue IDs already counted as views. Kept at module
-// scope (outside React) so it survives component remounts and React Query
-// refetches in the same tab. Without this guard, every refetch (focus
-// revalidation, stale refresh, navigating back to the page) would inflate
-// view_count — a single user reloading three times would show as 3 views.
-const _viewedThisSession = new Set()
-
 export function useIssue(id) {
   return useQuery({
     queryKey: issueKeys.detail(id),
     queryFn:  async () => {
       const issue = await fetchIssueById(id)
-      if (id && !_viewedThisSession.has(id)) {
-        _viewedThisSession.add(id)
-        incrementViewCount(id)
-      }
+      incrementViewCount(id)
       return issue
     },
     enabled:   !!id,
@@ -90,5 +82,37 @@ export function useMarkSolved() {
       showToast('Issue marked as solved! 🎉', 'success')
     },
     onError: (err) => showToast(err.message, 'error'),
+  })
+}
+
+export function useEditIssue() {
+  const queryClient   = useQueryClient()
+  const { showToast } = useApp()
+
+  return useMutation({
+    mutationFn: ({ issueId, updates }) => updateIssueQuery(issueId, updates),
+    onSuccess: (_data, { issueId }) => {
+      queryClient.invalidateQueries({ queryKey: issueKeys.detail(issueId) })
+      queryClient.invalidateQueries({ queryKey: issueKeys.all() })
+      showToast('Issue updated.', 'success')
+    },
+    onError: (err) => showToast(err.message || 'Failed to update issue.', 'error'),
+  })
+}
+
+export function useDeleteIssue() {
+  const queryClient   = useQueryClient()
+  const { showToast } = useApp()
+  const navigate      = useNavigate()
+
+  return useMutation({
+    mutationFn: (issueId) => deleteIssueQuery(issueId),
+    onSuccess: () => {
+      // The issue detail page is now gone; send the user back to the feed.
+      queryClient.invalidateQueries({ queryKey: issueKeys.all() })
+      showToast('Issue deleted.', 'success')
+      navigate('/feed', { replace: true })
+    },
+    onError: (err) => showToast(err.message || 'Failed to delete issue.', 'error'),
   })
 }
