@@ -1,5 +1,6 @@
+import { useState }               from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
-import { useIssue }               from '../../hooks/useIssues'
+import { useIssue, useEditIssue, useDeleteIssue } from '../../hooks/useIssues'
 import { useResponses }           from '../../hooks/useResponses'
 import { useVote, useUserVotes }  from '../../hooks/useVotes'
 import { useToggleSaved, useIsSaved } from '../../hooks/useSavedIssues'
@@ -10,6 +11,9 @@ import Icon                       from '../../components/ui/Icon'
 import Button                     from '../../components/ui/Button'
 import LoadingSpinner             from '../../components/ui/LoadingSpinner'
 import IssueThread                from '../../components/issues/IssueThread'
+import PostActionsMenu            from '../../components/issues/PostActionsMenu'
+import EditIssueModal             from '../../components/issues/EditIssueModal'
+import ConfirmModal               from '../../components/ui/ConfirmModal'
 import { normalizeIssue }         from '../../utils/normalize'
 
 export default function IssueDetailPage() {
@@ -52,9 +56,25 @@ export default function IssueDetailPage() {
   )
 
   const canMarkSolved = currentUser?.id === rawIssue?.author_id
+  const isOwner       = currentUser?.id === rawIssue?.author_id
+  const wasEdited     = rawIssue?.updated_at && rawIssue?.created_at &&
+                        new Date(rawIssue.updated_at) - new Date(rawIssue.created_at) > 1000
+
+  const [editOpen, setEditOpen]     = useState(false)
+  const [deleteOpen, setDeleteOpen] = useState(false)
+  const editIssue   = useEditIssue()
+  const deleteIssue = useDeleteIssue()
 
   const handleSave = () => {
     toggleSaved.mutate({ issueId: id, isSaved })
+  }
+
+  const handleEditSave = (updates) => {
+    editIssue.mutate({ issueId: id, updates }, { onSuccess: () => setEditOpen(false) })
+  }
+
+  const handleDelete = () => {
+    deleteIssue.mutate(id) // navigates to /feed on success
   }
 
   return (
@@ -111,16 +131,24 @@ export default function IssueDetailPage() {
                   <span style={{ fontSize: 13, fontWeight: 600 }}>{issue.author.name}</span>
                   {issue.author.ambassador && <Badge text="Ambassador" variant="badge-blue" />}
                   <span style={{ fontSize: 12, color: 'var(--text-muted)', marginLeft: 8 }}>
-                    · {issue.createdAt}
+                    · {issue.createdAt}{wasEdited && ' · (edited)'}
                   </span>
                 </div>
               </div>
-              {currentUser && (
-                <Button variant="secondary" size="sm" onClick={handleSave} disabled={toggleSaved.isPending}>
-                  <Icon name="bookmark" size={13} />
-                  {isSaved ? 'Saved' : 'Save'}
-                </Button>
-              )}
+              <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                {currentUser && (
+                  <Button variant="secondary" size="sm" onClick={handleSave} disabled={toggleSaved.isPending}>
+                    <Icon name="bookmark" size={13} />
+                    {isSaved ? 'Saved' : 'Save'}
+                  </Button>
+                )}
+                {isOwner && (
+                  <PostActionsMenu
+                    onEdit={() => setEditOpen(true)}
+                    onDelete={() => setDeleteOpen(true)}
+                  />
+                )}
+              </div>
             </div>
           </div>
         </div>
@@ -140,6 +168,27 @@ export default function IssueDetailPage() {
         canMarkSolved={canMarkSolved}
         issueStatus={rawIssue.status}
       />
+
+      {isOwner && (
+        <>
+          <EditIssueModal
+            isOpen={editOpen}
+            onClose={() => setEditOpen(false)}
+            issue={rawIssue}
+            onSave={handleEditSave}
+            saving={editIssue.isPending}
+          />
+          <ConfirmModal
+            isOpen={deleteOpen}
+            onClose={() => setDeleteOpen(false)}
+            title="Delete this issue?"
+            message="This permanently deletes the issue and all its responses. This cannot be undone."
+            confirmText="Delete Issue"
+            onConfirm={handleDelete}
+            busy={deleteIssue.isPending}
+          />
+        </>
+      )}
     </div>
   )
 }
