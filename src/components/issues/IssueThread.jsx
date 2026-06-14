@@ -1,5 +1,5 @@
 import { useState }        from 'react'
-import { useCreateResponse } from '../../hooks/useResponses'
+import { useCreateResponse, useEditResponse, useDeleteResponse } from '../../hooks/useResponses'
 import { useMarkSolved }     from '../../hooks/useIssues'
 import { useVote, useUserVotes } from '../../hooks/useVotes'
 import { useAuth }           from '../../context/AuthContext'
@@ -10,18 +10,37 @@ import Icon                  from '../ui/Icon'
 import Button                from '../ui/Button'
 import EmptyState            from '../ui/EmptyState'
 import LoadingSpinner        from '../ui/LoadingSpinner'
-import { getInitials }       from '../../utils/formatters'
+import PostActionsMenu       from './PostActionsMenu'
+import ConfirmModal          from '../ui/ConfirmModal'
+
+function getInitials(name) {
+  if (!name) return '?'
+  return name.split(' ').map(w => w[0]).join('').toUpperCase().slice(0, 2)
+}
 
 function roleColor(role) {
   const map = { ambassador: '#2F5BE8', moderator: '#7C3AED', admin: '#DC2626', member: '#0D9488' }
   return map[role] ?? '#9BA8BE'
 }
 
-function ResponseItem({ response, issueId, canMarkSolved, issueStatus, initialVote }) {
+function ResponseItem({ response, issueId, canMarkSolved, issueStatus, initialVote, currentUser }) {
   const markSolved = useMarkSolved()
+  const editResp   = useEditResponse(issueId)
+  const deleteResp = useDeleteResponse(issueId)
   const author     = response.author ?? {}
   const isAnon     = response.is_anonymous || !author.id
   const displayName = isAnon ? 'Anonymous' : (author.full_name ?? 'Unknown')
+
+  // Ownership: only the real author can edit/delete, and only when the
+  // response is not anonymous-hidden from themselves (they still own it).
+  const isOwner = currentUser?.id && author.id && currentUser.id === author.id
+
+  const wasEdited = response.updated_at && response.created_at &&
+                    new Date(response.updated_at) - new Date(response.created_at) > 1000
+
+  const [editing, setEditing]   = useState(false)
+  const [draft, setDraft]       = useState(response.body)
+  const [deleteOpen, setDeleteOpen] = useState(false)
 
   const { voted, voteCount, toggle } = useVote({
     targetId:      response.id,
@@ -37,6 +56,17 @@ function ResponseItem({ response, issueId, canMarkSolved, issueStatus, initialVo
     ? 'response-card ambassador'
     : 'response-card'
 
+  const saveEdit = () => {
+    const body = draft.trim()
+    if (!body || body === response.body) { setEditing(false); return }
+    editResp.mutate({ responseId: response.id, body }, { onSuccess: () => setEditing(false) })
+  }
+
+  const cancelEdit = () => {
+    setDraft(response.body)
+    setEditing(false)
+  }
+
   return (
     <div className={cardClass}>
       {response.is_best_answer && (
@@ -50,9 +80,29 @@ function ResponseItem({ response, issueId, canMarkSolved, issueStatus, initialVo
         </div>
       )}
 
-      <p style={{ fontSize: 14.5, lineHeight: 1.7, color: 'var(--text-primary)', marginBottom: 14 }}>
-        {response.body}
-      </p>
+      {editing ? (
+        <div style={{ marginBottom: 14 }}>
+          <textarea
+            className="form-input form-textarea"
+            rows={4}
+            value={draft}
+            onChange={(e) => setDraft(e.target.value)}
+            autoFocus
+          />
+          <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 8, marginTop: 8 }}>
+            <Button variant="ghost" size="sm" onClick={cancelEdit} disabled={editResp.isPending}>
+              Cancel
+            </Button>
+            <Button size="sm" onClick={saveEdit} disabled={editResp.isPending || !draft.trim()}>
+              {editResp.isPending ? 'Saving…' : 'Save'}
+            </Button>
+          </div>
+        </div>
+      ) : (
+        <p style={{ fontSize: 14.5, lineHeight: 1.7, color: 'var(--text-primary)', marginBottom: 14 }}>
+          {response.body}
+        </p>
+      )}
 
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 8 }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
@@ -60,7 +110,7 @@ function ResponseItem({ response, issueId, canMarkSolved, issueStatus, initialVo
           <span style={{ fontSize: 12.5, fontWeight: 600 }}>{displayName}</span>
           {!isAnon && author.trust_score > 0 && <TrustRing score={author.trust_score} />}
           <span style={{ fontSize: 12, color: 'var(--text-muted)' }}>
-            · {response.created_at?.slice(0, 10)}
+            · {response.created_at?.slice(0, 10)}{wasEdited && ' · (edited)'}
           </span>
         </div>
 
@@ -82,8 +132,26 @@ function ResponseItem({ response, issueId, canMarkSolved, issueStatus, initialVo
             <Icon name="chevronUp" size={13} />
             <span>{voteCount}</span>
           </button>
+          {isOwner && !editing && (
+            <PostActionsMenu
+              onEdit={() => { setDraft(response.body); setEditing(true) }}
+              onDelete={() => setDeleteOpen(true)}
+            />
+          )}
         </div>
       </div>
+
+      {isOwner && (
+        <ConfirmModal
+          isOpen={deleteOpen}
+          onClose={() => setDeleteOpen(false)}
+          title="Delete this response?"
+          message="This permanently removes your response. This cannot be undone."
+          confirmText="Delete Response"
+          onConfirm={() => deleteResp.mutate(response.id, { onSuccess: () => setDeleteOpen(false) })}
+          busy={deleteResp.isPending}
+        />
+      )}
     </div>
   )
 }
@@ -130,6 +198,7 @@ export default function IssueThread({ issueId, responses = [], respLoading, canM
               canMarkSolved={canMarkSolved}
               issueStatus={issueStatus}
               initialVote={lookupVote('response', r.id)}
+              currentUser={currentUser}
             />
           ))}
         </div>
