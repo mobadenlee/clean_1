@@ -2,6 +2,7 @@ import { BrowserRouter } from 'react-router-dom'
 
 import AppRoutes     from './routes/AppRoutes'
 import ErrorBoundary from './components/ErrorBoundary'
+import ScrollToTop   from './components/ScrollToTop'
 import Toast         from './components/ui/Toast'
 import { useApp }    from './context/AppContext'
 
@@ -23,6 +24,7 @@ function GlobalToast() {
 export default function App() {
   return (
     <BrowserRouter>
+      <ScrollToTop />
       <ErrorBoundary>
         <AppRoutes />
         <GlobalToast />
