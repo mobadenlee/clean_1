@@ -75,6 +75,40 @@ export async function createIssue(payload) {
   return data
 }
 
+// Edit an issue. RLS (issues_update_own) restricts this to the author.
+// The trg_issues_touch trigger advances updated_at automatically, which is
+// how the UI detects an edit (updated_at > created_at → show "edited").
+// Only the fields a user is allowed to edit are accepted here.
+export async function updateIssueQuery(issueId, { title, body, category_id, state, urgency }) {
+  const updates = {}
+  if (title       !== undefined) updates.title       = title
+  if (body        !== undefined) updates.body        = body
+  if (category_id !== undefined) updates.category_id = category_id
+  if (state       !== undefined) updates.state       = state
+  if (urgency     !== undefined) updates.urgency     = urgency
+
+  const { data, error } = await supabase
+    .from('issues')
+    .update(updates)
+    .eq('id', issueId)
+    .select()
+    .single()
+  if (error) throw error
+  return data
+}
+
+// Hard delete an issue. RLS (issues_delete_own) restricts this to the author.
+// Responses, votes, saved_issues, and notifications referencing this issue
+// are removed by ON DELETE CASCADE / ON DELETE SET NULL defined in 0001.
+export async function deleteIssueQuery(issueId) {
+  const { error } = await supabase
+    .from('issues')
+    .delete()
+    .eq('id', issueId)
+  if (error) throw error
+  return { id: issueId }
+}
+
 export async function markIssueSolvedQuery(issueId, solvedResponseId) {
   const { data, error } = await supabase
     .from('issues')
@@ -101,8 +135,16 @@ export function incrementViewCount(issueId) {
 }
 
 // ── CATEGORIES ────────────────────────────────────────────────────────────────
-// (Categories are fetched directly in useCategories.js, which keeps the read
-// scoped to the current auth session. No shared helper here.)
+
+export async function fetchCategories() {
+  const { data, error } = await supabase
+    .from('issue_categories')
+    .select('id, slug, name')
+    .eq('is_active', true)
+    .order('sort_order')
+  if (error) throw error
+  return data ?? []
+}
 
 // ── RESPONSES ─────────────────────────────────────────────────────────────────
 
@@ -111,7 +153,7 @@ export async function fetchResponses(issueId) {
     .from('responses')
     .select(`
       id, issue_id, body, is_anonymous, is_best_answer,
-      is_ambassador_response, upvote_count, created_at,
+      is_ambassador_response, upvote_count, created_at, updated_at,
       author:profiles!author_id(${PROFILE_FIELDS})
     `)
     .eq('issue_id', issueId)
@@ -136,9 +178,57 @@ export async function createResponse({ issueId, body, isAnonymous, authorId }) {
     })
     .select(`
       id, issue_id, body, is_anonymous, is_best_answer,
-      is_ambassador_response, upvote_count, created_at,
+      is_ambassador_response, upvote_count, created_at, updated_at,
       author:profiles!author_id(${PROFILE_FIELDS})
     `)
+    .single()
+  if (error) throw error
+  return data
+}
+
+// Edit a response body. RLS (responses_update_own) restricts to the author.
+// trg_responses_touch advances updated_at → UI shows "edited".
+// Only body is editable; is_anonymous/is_best_answer are intentionally not
+// changeable here (best-answer is owner-of-issue controlled; anonymity is
+// set at creation).
+export async function updateResponseQuery(responseId, body) {
+  const { data, error } = await supabase
+    .from('responses')
+    .update({ body })
+    .eq('id', responseId)
+    .select(`
+      id, issue_id, body, is_anonymous, is_best_answer,
+      is_ambassador_response, upvote_count, created_at, updated_at,
+      author:profiles!author_id(${PROFILE_FIELDS})
+    `)
+    .single()
+  if (error) throw error
+  return data
+}
+
+// Hard delete a response. RLS (responses_delete_own) restricts to the author.
+// The bump_issue_response_count trigger keeps issues.response_count correct.
+export async function deleteResponseQuery(responseId) {
+  const { error } = await supabase
+    .from('responses')
+    .delete()
+    .eq('id', responseId)
+  if (error) throw error
+  return { id: responseId }
+}
+
+export async function markBestAnswerQuery(responseId, issueId) {
+  await supabase
+    .from('responses')
+    .update({ is_best_answer: false })
+    .eq('issue_id', issueId)
+    .eq('is_best_answer', true)
+
+  const { data, error } = await supabase
+    .from('responses')
+    .update({ is_best_answer: true })
+    .eq('id', responseId)
+    .select()
     .single()
   if (error) throw error
   return data
