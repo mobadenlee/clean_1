@@ -41,6 +41,13 @@ export default function IssueDetailPage() {
     initialVoteId: existingVote?.id ?? null,
   })
 
+  // Edit/delete hooks must be called unconditionally, BEFORE any early return,
+  // or the hook count changes between renders (React error #310).
+  const [editOpen, setEditOpen]     = useState(false)
+  const [deleteOpen, setDeleteOpen] = useState(false)
+  const editIssue   = useEditIssue()
+  const deleteIssue = useDeleteIssue()
+
   if (issueLoading) return (
     <div className="page-content animate-in" style={{ display: 'flex', justifyContent: 'center', paddingTop: 80 }}>
       <LoadingSpinner size={36} />
@@ -59,11 +66,6 @@ export default function IssueDetailPage() {
   const isOwner       = currentUser?.id === rawIssue?.author_id
   const wasEdited     = rawIssue?.updated_at && rawIssue?.created_at &&
                         new Date(rawIssue.updated_at) - new Date(rawIssue.created_at) > 1000
-
-  const [editOpen, setEditOpen]     = useState(false)
-  const [deleteOpen, setDeleteOpen] = useState(false)
-  const editIssue   = useEditIssue()
-  const deleteIssue = useDeleteIssue()
 
   const handleSave = () => {
     toggleSaved.mutate({ issueId: id, isSaved })
