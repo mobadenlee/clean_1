@@ -1,4 +1,5 @@
 export const CATEGORIES = [
+  'Call-up & Mobilization',
   'PPA Issues',
   'Clearance',
   'CDS',
